@@ -240,6 +240,50 @@ void gft_dct4x4_btf(const double *input, double *output) {
 #endif
 }
 
+void dct4_btf(const double *input, double *output) {
+  double temp[4] = {0.0};
+  double cos_factors[2] = {0.6532814824, 0.2705980501};
+
+  // stage 1
+  temp[0] = input[0] + input[3];
+  temp[3] = input[0] - input[3];
+  temp[1] = input[1] + input[2];
+  temp[2] = input[1] - input[2];
+
+  // stage 2
+  output[0] = (temp[0] + temp[1]) / 2;
+  output[2] = (temp[0] - temp[1]) / 2;
+  output[1] = cos_factors[0] * temp[3] + cos_factors[1] * temp[2];
+  output[3] = cos_factors[1] * temp[3] - cos_factors[0] * temp[2];
+}
+
+void gft_dct4x4_sep(const double *input, double *output) {
+  double temp[16] = {0.0};
+  double temp1[16] = {0.0};
+
+  int flip_idx[16] = {0, 4, 8, 12, 1, 5, 9, 13, 2, 6, 10, 14, 3, 7, 11, 15};
+  int output_idx[16] = {0, 2, 5, 9, 1, 3, 7, 12, 4, 6, 10, 14, 8, 11, 13, 15};
+
+  // column transform
+  dct4_btf(input, temp);
+  dct4_btf(&input[4], &temp[4]);
+  dct4_btf(&input[8], &temp[8]);
+  dct4_btf(&input[12], &temp[12]);
+
+  for (int i = 0; i < 16; i++)
+    temp1[i] = temp[flip_idx[i]];
+
+  // row transform
+  dct4_btf(temp1, temp);
+  dct4_btf(&temp1[4], &temp[4]);
+  dct4_btf(&temp1[8], &temp[8]);
+  dct4_btf(&temp1[12], &temp[12]);
+
+  // output (ordered by frequencies)
+  for (int i = 0; i < 16; i++)
+    output[output_idx[i]] = temp[i];
+}
+
 void gft_skeleton15_mat(const double *input, double *output) {
   mat_times_vec(input, output, sk15, 15);
 }

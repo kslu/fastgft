@@ -8,6 +8,7 @@ int main(int argc, char *argv[]) {
   double buffer_in[MAX_NUM_DATA][16];
   double buffer_out_mat[MAX_NUM_DATA][16];
   double buffer_out_btf[MAX_NUM_DATA][16];
+  double buffer_out_sep[MAX_NUM_DATA][16];
 
   // read inputs
   FILE *fp_in;
@@ -33,9 +34,17 @@ int main(int argc, char *argv[]) {
     gft_dct4x4_btf(buffer_in[i], buffer_out_btf[i]);
   t_btf = clock() - t_btf;
 
+  // separable GFT
+  clock_t t_sep;
+  t_sep = clock();
+  for (int i = 0; i < n_inputs; i++)
+    gft_dct4x4_sep(buffer_in[i], buffer_out_sep[i]);
+  t_sep = clock() - t_sep;
+
   // write results
   double time_mat = ((double)t_mat) / CLOCKS_PER_SEC;
   double time_btf = ((double)t_btf) / CLOCKS_PER_SEC;
+  double time_sep = ((double)t_sep) / CLOCKS_PER_SEC;
 
   FILE *fp_out_mat;
   fp_out_mat = fopen(argv[2], "w+");
@@ -55,8 +64,18 @@ int main(int argc, char *argv[]) {
     fprintf(fp_out_btf, "\n");
   }
 
+  FILE *fp_out_sep;
+  fp_out_sep = fopen(argv[4], "w+");
+  fprintf(fp_out_sep, "%.4lf\n", time_sep);
+  for (int i = 0; i < n_inputs; i++) {
+    for (int j = 0; j < n; j++)
+      fprintf(fp_out_sep, "%.4lf ", buffer_out_sep[i][j]);
+    fprintf(fp_out_sep, "\n");
+  }
+
   fclose(fp_in);
   fclose(fp_out_mat);
   fclose(fp_out_btf);
+  fclose(fp_out_sep);
   return 0;
 }
