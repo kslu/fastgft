@@ -1,16 +1,38 @@
 CC=gcc
 CFLAGS=-O2
 
-all: gft_speed
+all: speed_sk15 speed_star10 speed_bd4x4 speed_dct4x4
 
-gft_speed: txfm.o gsptools.o
-	@echo "txfm.o"
+speed_sk15: txfm.o speed_sk15.o
+	$(CC) -o $@ $?
+
+speed_star10: txfm.o speed_star10.o
+	$(CC) -o $@ $?
+
+speed_bd4x4: txfm.o speed_bd4x4.o
+	$(CC) -o $@ $?
+
+speed_dct4x4: txfm.o speed_dct4x4.o
 	$(CC) -o $@ $?
 
 txfm.o: txfm.c
+	@echo "txfm.o"
 	$(CC) -c $<
 
-gsptools.o: gsptools.c
+speed_sk15.o: speed_sk15.c
+	@echo "speed_sk15.o"
+	$(CC) -c $<
+
+speed_star10.o: speed_star10.c
+	@echo "speed_star10.o"
+	$(CC) -c $<
+
+speed_bd4x4.o: speed_bd4x4.c
+	@echo "speed_bd4x4.o"
+	$(CC) -c $<
+
+speed_dct4x4.o: speed_dct4x4.c
+	@echo "speed_dct4x4.o"
 	$(CC) -c $<
 
 clean:
