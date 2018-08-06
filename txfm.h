@@ -8,7 +8,7 @@
 #include <time.h>
 
 #define CONFIG_DEBUG 0
-#define MAX_NUM_DATA 10000
+#define MAX_NUM_DATA 2000
 
 #define SQRT2 1.414213564
 #define INVSQRT2 0.7071067812
@@ -21,12 +21,21 @@ void mat_times_vec(const double *input, double *output, const double *gftmtx,
 
 void gft_star10_mat(const double *input, double *output);
 void gft_star10_btf(const double *input, double *output);
+void gft_star100_mat(const double *input, double *output);
+void gft_star100_btf(const double *input, double *output);
 void gft_bd4x4_mat(const double *input, double *output);
 void gft_bd4x4_btf(const double *input, double *output);
+void gft_bd8x8_mat(const double *input, double *output);
+void gft_bd8x8_btf(const double *input, double *output);
 void gft_dct4x4_mat(const double *input, double *output);
 void gft_dct4x4_btf(const double *input, double *output);
 void gft_dct4x4_sep(const double *input, double *output);
+void gft_dct8x8_mat(const double *input, double *output);
+void gft_dct8x8_btf(const double *input, double *output);
+void gft_dct8x8_sep(const double *input, double *output);
 void gft_skeleton15_mat(const double *input, double *output);
 void gft_skeleton15_btf(const double *input, double *output);
+void gft_skeleton25_mat(const double *input, double *output);
+void gft_skeleton25_btf(const double *input, double *output);
 
 #endif

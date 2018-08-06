@@ -48,28 +48,28 @@ int main(int argc, char *argv[]) {
 
   FILE *fp_out_mat;
   fp_out_mat = fopen(argv[2], "w+");
-  fprintf(fp_out_mat, "%.4lf\n", time_mat);
+  fprintf(fp_out_mat, "%.8lf\n", time_mat);
   for (int i = 0; i < n_inputs; i++) {
     for (int j = 0; j < n; j++)
-      fprintf(fp_out_mat, "%.4lf ", buffer_out_mat[i][j]);
+      fprintf(fp_out_mat, "%.8lf ", buffer_out_mat[i][j]);
     fprintf(fp_out_mat, "\n");
   }
 
   FILE *fp_out_btf;
   fp_out_btf = fopen(argv[3], "w+");
-  fprintf(fp_out_btf, "%.4lf\n", time_btf);
+  fprintf(fp_out_btf, "%.8lf\n", time_btf);
   for (int i = 0; i < n_inputs; i++) {
     for (int j = 0; j < n; j++)
-      fprintf(fp_out_btf, "%.4lf ", buffer_out_btf[i][j]);
+      fprintf(fp_out_btf, "%.8lf ", buffer_out_btf[i][j]);
     fprintf(fp_out_btf, "\n");
   }
 
   FILE *fp_out_sep;
   fp_out_sep = fopen(argv[4], "w+");
-  fprintf(fp_out_sep, "%.4lf\n", time_sep);
+  fprintf(fp_out_sep, "%.8lf\n", time_sep);
   for (int i = 0; i < n_inputs; i++) {
     for (int j = 0; j < n; j++)
-      fprintf(fp_out_sep, "%.4lf ", buffer_out_sep[i][j]);
+      fprintf(fp_out_sep, "%.8lf ", buffer_out_sep[i][j]);
     fprintf(fp_out_sep, "\n");
   }
 

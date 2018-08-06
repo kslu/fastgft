@@ -3,11 +3,11 @@
 
 int main(int argc, char *argv[]) {
 
-  int n = 10;
+  int n = 64;
   int n_inputs;
-  double buffer_in[MAX_NUM_DATA][10];
-  double buffer_out_mat[MAX_NUM_DATA][10];
-  double buffer_out_btf[MAX_NUM_DATA][10];
+  double buffer_in[MAX_NUM_DATA][64];
+  double buffer_out_mat[MAX_NUM_DATA][64];
+  double buffer_out_btf[MAX_NUM_DATA][64];
 
   // read inputs
   FILE *fp_in;
@@ -23,14 +23,14 @@ int main(int argc, char *argv[]) {
   clock_t t_mat;
   t_mat = clock();
   for (int i = 0; i < n_inputs; i++)
-    gft_star10_mat(buffer_in[i], buffer_out_mat[i]);
+    gft_bd8x8_mat(buffer_in[i], buffer_out_mat[i]);
   t_mat = clock() - t_mat;
 
   // butterfly GFT
   clock_t t_btf;
   t_btf = clock();
   for (int i = 0; i < n_inputs; i++)
-    gft_star10_btf(buffer_in[i], buffer_out_btf[i]);
+    gft_bd8x8_btf(buffer_in[i], buffer_out_btf[i]);
   t_btf = clock() - t_btf;
 
   // write results
