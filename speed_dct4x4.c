@@ -5,77 +5,74 @@ int main(int argc, char *argv[]) {
 
   int n = 16;
   int n_inputs;
-  double buffer_in[MAX_NUM_DATA][16];
-  double buffer_out_mat[MAX_NUM_DATA][16];
-  double buffer_out_btf[MAX_NUM_DATA][16];
-  double buffer_out_sep[MAX_NUM_DATA][16];
+  double buffer_in[BATCH_SIZE][16];
+  double buffer_out_mat[BATCH_SIZE][16];
+  double buffer_out_btf[BATCH_SIZE][16];
+  double buffer_out_sep[BATCH_SIZE][16];
 
   // read inputs
-  FILE *fp_in;
-  fp_in = fopen(argv[1], "r");
+  FILE *fp_in = fopen(argv[1], "r");
+  FILE *fp_out = fopen(argv[2], "w+");
   if (fp_in != NULL)
     fscanf(fp_in, "%d", &n_inputs);
 
-  for (int i = 0; i < n_inputs; i++)
-    for (int j = 0; j < n; j++)
-      fscanf(fp_in, "%lf", &buffer_in[i][j]);
+  int n_batches = ceil(n_inputs / BATCH_SIZE);
+  int cur_batch_size = 0;
+  clock_t t_mat = 0, t_btf = 0, t_sep = 0, t_temp = 0;
 
-  // matrix GFT
-  clock_t t_mat;
-  t_mat = clock();
-  for (int i = 0; i < n_inputs; i++)
-    gft_dct4x4_mat(buffer_in[i], buffer_out_mat[i]);
-  t_mat = clock() - t_mat;
+  for (int b = 0; b < n_batches; b++) {
+    cur_batch_size = b < n_batches - 1 ? BATCH_SIZE : n_inputs - b * BATCH_SIZE;
+    for (int i = 0; i < cur_batch_size; i++) {
+      for (int j = 0; j < n; j++)
+        fscanf(fp_in, "%lf", &buffer_in[i][j]);
+    }
 
-  // butterfly GFT
-  clock_t t_btf;
-  t_btf = clock();
-  for (int i = 0; i < n_inputs; i++)
-    gft_dct4x4_btf(buffer_in[i], buffer_out_btf[i]);
-  t_btf = clock() - t_btf;
+    // matrix GFT
+    t_temp = clock();
+    for (int i = 0; i < cur_batch_size; i++)
+      gft_dct4x4_mat(buffer_in[i], buffer_out_mat[i]);
+    t_mat += clock() - t_temp;
 
-  // separable GFT
-  clock_t t_sep;
-  t_sep = clock();
-  for (int i = 0; i < n_inputs; i++)
-    gft_dct4x4_sep(buffer_in[i], buffer_out_sep[i]);
-  t_sep = clock() - t_sep;
+    // butterfly GFT
+    t_temp = clock();
+    for (int i = 0; i < cur_batch_size; i++)
+      gft_dct4x4_btf(buffer_in[i], buffer_out_btf[i]);
+    t_btf += clock() - t_temp;
 
-  // write results
+    // separable GFT
+    t_temp = clock();
+    for (int i = 0; i < cur_batch_size; i++)
+      gft_dct4x4_sep(buffer_in[i], buffer_out_btf[i]);
+    t_sep += clock() - t_temp;
+
+#if CONFIG_DEBUG
+    // write output GFT coefficients
+    for (int i = 0; i < cur_batch_size; i++) {
+      fprintf(fp_out, "Input #%d: \n", b * BATCH_SIZE + i);
+      fprintf(fp_out, "Matrix GFT: ");
+      for (int j = 0; j < n; j++)
+        fprintf(fp_out, "%.8lf ", buffer_out_mat[i][j]);
+      fprintf(fp_out, "\nButterfly GFT: ");
+      for (int j = 0; j < n; j++)
+        fprintf(fp_out, "%.8lf ", buffer_out_btf[i][j]);
+      fprintf(fp_out, "\nSeparable GFT: ");
+      for (int j = 0; j < n; j++)
+        fprintf(fp_out, "%.8lf ", buffer_out_sep[i][j]);
+      fprintf(fp_out, "\n");
+    }
+#endif
+  }
+
+  // write runtime
   double time_mat = ((double)t_mat) / CLOCKS_PER_SEC;
   double time_btf = ((double)t_btf) / CLOCKS_PER_SEC;
   double time_sep = ((double)t_sep) / CLOCKS_PER_SEC;
-
-  FILE *fp_out_mat;
-  fp_out_mat = fopen(argv[2], "w+");
-  fprintf(fp_out_mat, "%.8lf\n", time_mat);
-  for (int i = 0; i < n_inputs; i++) {
-    for (int j = 0; j < n; j++)
-      fprintf(fp_out_mat, "%.8lf ", buffer_out_mat[i][j]);
-    fprintf(fp_out_mat, "\n");
-  }
-
-  FILE *fp_out_btf;
-  fp_out_btf = fopen(argv[3], "w+");
-  fprintf(fp_out_btf, "%.8lf\n", time_btf);
-  for (int i = 0; i < n_inputs; i++) {
-    for (int j = 0; j < n; j++)
-      fprintf(fp_out_btf, "%.8lf ", buffer_out_btf[i][j]);
-    fprintf(fp_out_btf, "\n");
-  }
-
-  FILE *fp_out_sep;
-  fp_out_sep = fopen(argv[4], "w+");
-  fprintf(fp_out_sep, "%.8lf\n", time_sep);
-  for (int i = 0; i < n_inputs; i++) {
-    for (int j = 0; j < n; j++)
-      fprintf(fp_out_sep, "%.8lf ", buffer_out_sep[i][j]);
-    fprintf(fp_out_sep, "\n");
-  }
+  fprintf(fp_out, "#input = %d\n", n_inputs);
+  fprintf(fp_out, "Matrix GFT:    %.8lf\n", time_mat);
+  fprintf(fp_out, "Butterfly GFT: %.8lf\n", time_btf);
+  fprintf(fp_out, "Separable GFT: %.8lf", time_sep);
 
   fclose(fp_in);
-  fclose(fp_out_mat);
-  fclose(fp_out_btf);
-  fclose(fp_out_sep);
+  fclose(fp_out);
   return 0;
 }

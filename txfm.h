@@ -9,6 +9,7 @@
 
 #define CONFIG_DEBUG 0
 #define MAX_NUM_DATA 2000
+#define BATCH_SIZE 1000
 
 #define SQRT2 1.414213564
 #define INVSQRT2 0.7071067812
