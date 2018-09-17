@@ -1,9 +1,9 @@
 #include "txfm.h"
 
 #define NUM_TJ_GIVENS_TO_RUN 21
-#define NUM_BTFTJ_GIVENS_TO_RUN 16
+#define NUM_BTFTJ_GIVENS_TO_RUN 23
 #define NUM_PTJ_LAYERS_TO_RUN 25
-#define NUM_BTFPTJ_LAYERS_TO_RUN 13
+#define NUM_BTFPTJ_LAYERS_TO_RUN 21
 
 int main(int argc, char *argv[]) {
 
@@ -14,12 +14,14 @@ int main(int argc, char *argv[]) {
       2200, 2400, 2600, 2800, 3000, 3200, 3400, 3600, 3800, 4000};
   int givens_btftj[NUM_BTFTJ_GIVENS_TO_RUN] = {
       0,   100, 200,  300,  400,  500,  600,  700,
-      800, 900, 1000, 1100, 1200, 1300, 1400, 1500};
+      800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800, 1900,
+			2000};
   int givens_layers_ptj[NUM_PTJ_LAYERS_TO_RUN] = {
       0,  5,  10, 15, 20, 25, 30, 35,  40,  45,  50,  55, 60,
       65, 70, 75, 80, 85, 90, 95, 100, 105, 110, 115, 120};
   int givens_layers_btfptj[NUM_BTFPTJ_LAYERS_TO_RUN] = {
-      0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60};
+      0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85,
+			90, 95, 100};
   double buffer_in[BATCH_SIZE][64];
   double buffer_out_mat[BATCH_SIZE][64];
   double buffer_out_btf[BATCH_SIZE][64];
@@ -168,7 +170,7 @@ int main(int argc, char *argv[]) {
             acc_error_tj[k] / ((double)n_inputs));
 
   for (int k = 0; k < NUM_PTJ_LAYERS_TO_RUN; k++)
-    fprintf(fp_out, "PTJ-GFT:        %.8lf, (%d layers, error = %.8lf)\n",
+    fprintf(fp_out, "PTJ-GFT:       %.8lf, (%d layers, error = %.8lf)\n",
             ((double)t_ptj[k]) / CLOCKS_PER_SEC, givens_layers_ptj[k],
             acc_error_ptj[k] / ((double)n_inputs));
 
@@ -179,7 +181,7 @@ int main(int argc, char *argv[]) {
             acc_error_btftj[k] / ((double)n_inputs));
 
   for (int k = 0; k < NUM_BTFPTJ_LAYERS_TO_RUN; k++)
-    fprintf(fp_out, "BTFPTJ-GFT:     %.8lf, (%d layers, error = %.8lf)\n",
+    fprintf(fp_out, "BTFPTJ-GFT:    %.8lf, (%d layers, error = %.8lf)\n",
             ((double)t_btfptj[k]) / CLOCKS_PER_SEC, givens_layers_btfptj[k],
             acc_error_btfptj[k] / ((double)n_inputs));
 
