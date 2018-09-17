@@ -59,20 +59,20 @@ int main(int argc, char *argv[]) {
     // matrix GFT
     t_temp = clock();
     for (int i = 0; i < cur_batch_size; i++)
-      gft_bd8x8_mat(buffer_in[i], buffer_out_mat[i]);
+      gft_z8x8_mat(buffer_in[i], buffer_out_mat[i]);
     t_mat += clock() - t_temp;
 
     // butterfly GFT
     t_temp = clock();
     for (int i = 0; i < cur_batch_size; i++)
-      gft_bd8x8_btf(buffer_in[i], buffer_out_btf[i]);
+      gft_z8x8_btf(buffer_in[i], buffer_out_btf[i]);
     t_btf += clock() - t_temp;
 
     // Truncated Jacobi (TJ)-GFT
     for (int k = 0; k < NUM_TJ_GIVENS_TO_RUN; k++) {
       t_temp = clock();
       for (int i = 0; i < cur_batch_size; i++)
-        gft_bd8x8_tj(buffer_in[i], buffer_out_tj[i], givens_tj[k]);
+        gft_z8x8_tj(buffer_in[i], buffer_out_tj[i], givens_tj[k]);
       t_tj[k] += clock() - t_temp;
       // compute GFT coefficients error
       for (int i = 0; i < cur_batch_size; i++) {
@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
     for (int k = 0; k < NUM_PTJ_LAYERS_TO_RUN; k++) {
       t_temp = clock();
       for (int i = 0; i < cur_batch_size; i++)
-        gft_bd8x8_ptj(buffer_in[i], buffer_out_ptj[i], givens_layers_ptj[k]);
+        gft_z8x8_ptj(buffer_in[i], buffer_out_ptj[i], givens_layers_ptj[k]);
       t_ptj[k] += clock() - t_temp;
       // compute GFT coefficients error
       for (int i = 0; i < cur_batch_size; i++) {
@@ -102,7 +102,7 @@ int main(int argc, char *argv[]) {
     for (int k = 0; k < NUM_BTFTJ_GIVENS_TO_RUN; k++) {
       t_temp = clock();
       for (int i = 0; i < cur_batch_size; i++)
-        gft_bd8x8_btf_tj(buffer_in[i], buffer_out_btftj[i], givens_btftj[k]);
+        gft_z8x8_btf_tj(buffer_in[i], buffer_out_btftj[i], givens_btftj[k]);
       t_btftj[k] += clock() - t_temp;
       // compute GFT coefficients error
       for (int i = 0; i < cur_batch_size; i++) {
@@ -117,8 +117,8 @@ int main(int argc, char *argv[]) {
     for (int k = 0; k < NUM_BTFPTJ_LAYERS_TO_RUN; k++) {
       t_temp = clock();
       for (int i = 0; i < cur_batch_size; i++)
-        gft_bd8x8_btf_ptj(buffer_in[i], buffer_out_btfptj[i],
-                          givens_layers_btfptj[k]);
+        gft_z8x8_btf_ptj(buffer_in[i], buffer_out_btfptj[i],
+                         givens_layers_btfptj[k]);
       t_btfptj[k] += clock() - t_temp;
       // compute GFT coefficients error
       for (int i = 0; i < cur_batch_size; i++) {
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 
   for (int k = 0; k < NUM_BTFTJ_GIVENS_TO_RUN; k++)
     fprintf(fp_out,
-            "BTFTJ-GFT:     %.8lf, (%d Givens rotations, error = %.8lf)\n",
+            "BTFTJ-GFT:      %.8lf, (%d Givens rotations, error = %.8lf)\n",
             ((double)t_btftj[k]) / CLOCKS_PER_SEC, givens_btftj[k],
             acc_error_btftj[k] / ((double)n_inputs));
 

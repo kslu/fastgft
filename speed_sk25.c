@@ -15,7 +15,7 @@ int main(int argc, char *argv[]) {
   if (fp_in != NULL)
     fscanf(fp_in, "%d", &n_inputs);
 
-  int n_batches = ceil(n_inputs / BATCH_SIZE);
+  int n_batches = ceil((double)n_inputs / (double)BATCH_SIZE);
   int cur_batch_size = 0;
   clock_t t_mat = 0, t_btf = 0, t_temp = 0;
 

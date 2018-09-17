@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-O2
 
-all: speed_sk15 speed_sk25 speed_star10 speed_star100 speed_bd4x4 speed_bd8x8 speed_dct4x4 speed_dct8x8
+all: speed_sk15 speed_sk25 speed_star10 speed_star100 speed_bd4x4 speed_bd8x8 speed_dct4x4 speed_dct8x8 speed_z8x8
 
 speed_sk15: txfm.o speed_sk15.o
 	$(CC) -o $@ $?
@@ -25,6 +25,9 @@ speed_dct4x4: txfm.o speed_dct4x4.o
 	$(CC) -o $@ $?
 
 speed_dct8x8: txfm.o speed_dct8x8.o
+	$(CC) -o $@ $?
+
+speed_z8x8: txfm.o speed_z8x8.o
 	$(CC) -o $@ $?
 
 txfm.o: txfm.c
@@ -61,6 +64,10 @@ speed_dct4x4.o: speed_dct4x4.c
 
 speed_dct8x8.o: speed_dct8x8.c
 	@echo "speed_dct8x8.o"
+	$(CC) -c $<
+
+speed_z8x8.o: speed_z8x8.c
+	@echo "speed_z8x8.o"
 	$(CC) -c $<
 
 clean:

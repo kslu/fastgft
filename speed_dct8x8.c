@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
   if (fp_in != NULL)
     fscanf(fp_in, "%d", &n_inputs);
 
-  int n_batches = ceil(n_inputs / BATCH_SIZE);
+  int n_batches = ceil((double)n_inputs / (double)BATCH_SIZE);
   int cur_batch_size = 0;
   clock_t t_mat = 0, t_btf = 0, t_sep = 0, t_temp = 0;
 
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     // separable GFT
     t_temp = clock();
     for (int i = 0; i < cur_batch_size; i++)
-      gft_dct8x8_sep(buffer_in[i], buffer_out_btf[i]);
+      gft_dct8x8_sep(buffer_in[i], buffer_out_sep[i]);
     t_sep += clock() - t_temp;
 
 #if CONFIG_DEBUG

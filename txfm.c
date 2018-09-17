@@ -1,15 +1,19 @@
 #include "txfm.h"
 #include "gftmatrices.h"
+#include "givens_ptj.h"
+#include "givens_tj.h"
 
 #if CONFIG_DEBUG
 void show_coefficients(const double *input, const double *output, int n) {
-  fprintf(stderr, "(");
-  for (int i = 0; i < n - 1; i++)
-    fprintf(stderr, "%.4lf,", input[i]);
-  fprintf(stderr, "%.4lf)\n[", input[n - 1]);
-  for (int i = 0; i < n - 1; i++)
-    fprintf(stderr, "%.4lf,", output[i]);
-  fprintf(stderr, "%.4lf]\n", output[n - 1]);
+  /*
+    fprintf(stderr, "(");
+    for (int i = 0; i < n - 1; i++)
+      fprintf(stderr, "%.4lf,", input[i]);
+    fprintf(stderr, "%.4lf)\n[", input[n - 1]);
+    for (int i = 0; i < n - 1; i++)
+      fprintf(stderr, "%.4lf,", output[i]);
+    fprintf(stderr, "%.4lf]\n", output[n - 1]);
+  */
 }
 #endif
 
@@ -20,6 +24,80 @@ void mat_times_vec(const double *input, double *output, const double *gftmtx,
     for (int j = 0; j < n; j++)
       output[i] += input[j] * gftmtx[i * n + j];
   }
+}
+
+void serial_givens_tx(const double *input, double *output, int n,
+                      const int *coords, const double *angles, const int *idx,
+                      int n_givens) {
+  int ii, jj;
+  double xi, xj, anglecos, anglesin;
+  double temp[MAX_N] = {0.0};
+
+  // copy data for in-place operations
+  assert(n <= MAX_N);
+  for (int i = 0; i < n; i++)
+    temp[i] = input[i];
+
+  for (int i = 0; i < n_givens; i++) {
+    // i * 2 + j <==> [i][j]
+    ii = coords[i * 2];
+    jj = coords[i * 2 + 1];
+    if (ii == -1 && jj == -1)
+      break;
+    anglecos = angles[i * 2];
+    anglesin = angles[i * 2 + 1];
+    xi = temp[ii];
+    xj = temp[jj];
+    temp[ii] = xi * anglecos - xj * anglesin;
+    temp[jj] = xi * anglesin + xj * anglecos;
+  }
+
+  // order the frequency
+  int order_list_rowid = 0;
+  while (idx[(order_list_rowid + 1) * (n + 1)] < n_givens)
+    order_list_rowid++;
+
+  // fprintf(stderr, "[%d,%d,%d]", n_givens, order_list_rowid,
+  // idx[order_list_rowid*(n+1)]);
+  for (int i = 0; i < n; i++)
+    output[idx[order_list_rowid * (n + 1) + i + 1]] = temp[i];
+}
+
+void layered_givens_tx(const double *input, double *output, int n,
+                       const int *coords, const double *angles, const int *idx,
+                       int n_layers) {
+  int ii, jj;
+  double xi, xj, anglecos, anglesin;
+  double temp[MAX_N] = {0.0};
+
+  // copy data for in-place operations
+  assert(n < MAX_N);
+  for (int i = 0; i < n; i++)
+    temp[i] = input[i];
+
+  for (int i = 0; i < n_layers; i++) {
+    for (int j = 0; j < n / 2; j++) {
+      // i * (n/2 * 2) + j * 2 + k  <==> [i][j][k]
+      ii = coords[i * n + j * 2];
+      jj = coords[i * n + j * 2 + 1];
+      if (ii == -1 && jj == -1)
+        continue;
+
+      anglecos = angles[i * n + j * 2];
+      anglesin = angles[i * n + j * 2 + 1];
+      xi = temp[ii];
+      xj = temp[jj];
+      temp[ii] = xi * anglecos - xj * anglesin;
+      temp[jj] = xi * anglesin + xj * anglecos;
+    }
+  }
+  // order the frequency
+  int order_list_rowid = 0;
+  while (idx[(order_list_rowid + 1) * (n + 1)] < n_layers)
+    order_list_rowid++;
+
+  for (int i = 0; i < n; i++)
+    output[idx[order_list_rowid * (n + 1) + i + 1]] = temp[i];
 }
 
 void gft_star10_mat(const double *input, double *output) {
@@ -306,6 +384,168 @@ void gft_bd8x8_btf(const double *input, double *output) {
   // output
   for (int i = 0; i < 64; i++)
     output[output_idx[i]] = temp_out[i];
+
+#if CONFIG_DEBUG
+  show_coefficients(input, output, 64);
+#endif
+}
+
+void gft_bd8x8_tj(const double *input, double *output, int n_givens) {
+  serial_givens_tx(input, output, 64, bd8x8_tj_coords, bd8x8_tj_angles,
+                   bd8x8_tj_idx, n_givens);
+}
+
+void gft_bd8x8_ptj(const double *input, double *output, int n_layers) {
+  layered_givens_tx(input, output, 64, bd8x8_ptj_coords, bd8x8_ptj_angles,
+                    bd8x8_ptj_idx, n_layers);
+}
+
+void gft_bd8x8_btf_tj(const double *input, double *output, int n_givens) {
+  double temp[64] = {0.0};
+  double temp1[64] = {0.0};
+  double temp_out[64] = {0.0};
+
+  int inv1[2][28] = {{1,  2,  3,  4,  5,  6,  7,  10, 11, 12, 13, 14, 15, 19,
+                      20, 21, 22, 23, 28, 29, 30, 31, 37, 38, 39, 46, 47, 55},
+                     {8,  16, 24, 32, 40, 48, 56, 17, 25, 33, 41, 49, 57, 26,
+                      34, 42, 50, 58, 35, 43, 51, 59, 44, 52, 60, 53, 61, 62}};
+  int inv2[2][28] = {{0,  1,  2,  3,  4,  5,  6,  8,  9,  10, 11, 12, 13, 16,
+                      17, 18, 19, 20, 24, 25, 26, 27, 32, 33, 34, 40, 41, 48},
+                     {63, 55, 47, 39, 31, 23, 15, 62, 54, 46, 38, 30, 22, 61,
+                      53, 45, 37, 29, 60, 52, 44, 36, 59, 51, 43, 58, 50, 57}};
+
+  int stage3_idx[64] = {0,  1,  2,  3,  4,  5,  6,  7,  9,  10, 11, 12, 13,
+                        14, 18, 19, 20, 21, 27, 28, 15, 22, 23, 29, 30, 31,
+                        36, 37, 38, 39, 45, 46, 47, 54, 55, 63, 8,  16, 17,
+                        24, 25, 26, 32, 33, 34, 35, 40, 41, 42, 48, 49, 56,
+                        43, 44, 50, 51, 52, 53, 57, 58, 59, 60, 61, 62};
+  int output_idx[64] = {0,  3,  6,  8,  12, 15, 18, 22, 26, 29, 33, 37, 40,
+                        43, 46, 51, 55, 57, 60, 63, 2,  7,  11, 14, 19, 23,
+                        27, 30, 34, 39, 44, 47, 50, 54, 58, 62, 1,  4,  9,
+                        13, 16, 21, 25, 28, 32, 36, 41, 45, 48, 53, 56, 61,
+                        5,  10, 17, 20, 24, 31, 35, 38, 42, 49, 52, 59};
+
+  // stage 1
+  temp[0] = SQRT2 * input[0];
+  temp[9] = SQRT2 * input[9];
+  temp[18] = SQRT2 * input[18];
+  temp[27] = SQRT2 * input[27];
+  temp[36] = SQRT2 * input[36];
+  temp[45] = SQRT2 * input[45];
+  temp[54] = SQRT2 * input[54];
+  temp[63] = SQRT2 * input[63];
+  for (int i = 0; i < 28; i++) {
+    temp[inv1[0][i]] = input[inv1[0][i]] + input[inv1[1][i]];
+    temp[inv1[1][i]] = input[inv1[0][i]] - input[inv1[1][i]];
+  }
+
+  // stage 2
+  temp1[7] = SQRT2 * temp[7];
+  temp1[14] = SQRT2 * temp[14];
+  temp1[21] = SQRT2 * temp[21];
+  temp1[28] = SQRT2 * temp[28];
+  temp1[35] = SQRT2 * temp[35];
+  temp1[42] = SQRT2 * temp[42];
+  temp1[49] = SQRT2 * temp[49];
+  temp1[56] = SQRT2 * temp[56];
+  for (int i = 0; i < 28; i++) {
+    temp1[inv2[0][i]] = temp[inv2[0][i]] + temp[inv2[1][i]];
+    temp1[inv2[1][i]] = temp[inv2[0][i]] - temp[inv2[1][i]];
+  }
+
+  // permutation
+  for (int i = 0; i < 64; i++)
+    temp[i] = temp1[stage3_idx[i]];
+
+  // stage 3
+  serial_givens_tx(temp, temp_out, 20, bd8x8_pp_tj_coords, bd8x8_pp_tj_angles,
+                   bd8x8_pp_tj_idx, n_givens / 4);
+  serial_givens_tx(&temp[20], &temp_out[20], 16, bd8x8_pm_tj_coords,
+                   bd8x8_pm_tj_angles, bd8x8_pm_tj_idx, n_givens / 4);
+  serial_givens_tx(&temp[36], &temp_out[36], 16, bd8x8_mp_tj_coords,
+                   bd8x8_mp_tj_angles, bd8x8_mp_tj_idx, n_givens / 4);
+  serial_givens_tx(&temp[52], &temp_out[52], 12, bd8x8_mm_tj_coords,
+                   bd8x8_mm_tj_angles, bd8x8_mm_tj_idx, n_givens / 4);
+
+  // output
+  for (int i = 0; i < 64; i++)
+    output[output_idx[i]] = temp_out[i] / 2;
+
+#if CONFIG_DEBUG
+  show_coefficients(input, output, 64);
+#endif
+}
+
+void gft_bd8x8_btf_ptj(const double *input, double *output, int n_layers) {
+  double temp[64] = {0.0};
+  double temp1[64] = {0.0};
+  double temp_out[64] = {0.0};
+
+  int inv1[2][28] = {{1,  2,  3,  4,  5,  6,  7,  10, 11, 12, 13, 14, 15, 19,
+                      20, 21, 22, 23, 28, 29, 30, 31, 37, 38, 39, 46, 47, 55},
+                     {8,  16, 24, 32, 40, 48, 56, 17, 25, 33, 41, 49, 57, 26,
+                      34, 42, 50, 58, 35, 43, 51, 59, 44, 52, 60, 53, 61, 62}};
+  int inv2[2][28] = {{0,  1,  2,  3,  4,  5,  6,  8,  9,  10, 11, 12, 13, 16,
+                      17, 18, 19, 20, 24, 25, 26, 27, 32, 33, 34, 40, 41, 48},
+                     {63, 55, 47, 39, 31, 23, 15, 62, 54, 46, 38, 30, 22, 61,
+                      53, 45, 37, 29, 60, 52, 44, 36, 59, 51, 43, 58, 50, 57}};
+
+  int stage3_idx[64] = {0,  1,  2,  3,  4,  5,  6,  7,  9,  10, 11, 12, 13,
+                        14, 18, 19, 20, 21, 27, 28, 15, 22, 23, 29, 30, 31,
+                        36, 37, 38, 39, 45, 46, 47, 54, 55, 63, 8,  16, 17,
+                        24, 25, 26, 32, 33, 34, 35, 40, 41, 42, 48, 49, 56,
+                        43, 44, 50, 51, 52, 53, 57, 58, 59, 60, 61, 62};
+  int output_idx[64] = {0,  3,  6,  8,  12, 15, 18, 22, 26, 29, 33, 37, 40,
+                        43, 46, 51, 55, 57, 60, 63, 2,  7,  11, 14, 19, 23,
+                        27, 30, 34, 39, 44, 47, 50, 54, 58, 62, 1,  4,  9,
+                        13, 16, 21, 25, 28, 32, 36, 41, 45, 48, 53, 56, 61,
+                        5,  10, 17, 20, 24, 31, 35, 38, 42, 49, 52, 59};
+
+  // stage 1
+  temp[0] = SQRT2 * input[0];
+  temp[9] = SQRT2 * input[9];
+  temp[18] = SQRT2 * input[18];
+  temp[27] = SQRT2 * input[27];
+  temp[36] = SQRT2 * input[36];
+  temp[45] = SQRT2 * input[45];
+  temp[54] = SQRT2 * input[54];
+  temp[63] = SQRT2 * input[63];
+  for (int i = 0; i < 28; i++) {
+    temp[inv1[0][i]] = input[inv1[0][i]] + input[inv1[1][i]];
+    temp[inv1[1][i]] = input[inv1[0][i]] - input[inv1[1][i]];
+  }
+
+  // stage 2
+  temp1[7] = SQRT2 * temp[7];
+  temp1[14] = SQRT2 * temp[14];
+  temp1[21] = SQRT2 * temp[21];
+  temp1[28] = SQRT2 * temp[28];
+  temp1[35] = SQRT2 * temp[35];
+  temp1[42] = SQRT2 * temp[42];
+  temp1[49] = SQRT2 * temp[49];
+  temp1[56] = SQRT2 * temp[56];
+  for (int i = 0; i < 28; i++) {
+    temp1[inv2[0][i]] = temp[inv2[0][i]] + temp[inv2[1][i]];
+    temp1[inv2[1][i]] = temp[inv2[0][i]] - temp[inv2[1][i]];
+  }
+
+  // permutation
+  for (int i = 0; i < 64; i++)
+    temp[i] = temp1[stage3_idx[i]];
+
+  // stage 3
+  layered_givens_tx(temp, temp_out, 20, bd8x8_pp_ptj_coords,
+                    bd8x8_pp_ptj_angles, bd8x8_pp_ptj_idx, n_layers);
+  layered_givens_tx(&temp[20], &temp_out[20], 16, bd8x8_pm_ptj_coords,
+                    bd8x8_pm_ptj_angles, bd8x8_pm_ptj_idx, n_layers);
+  layered_givens_tx(&temp[36], &temp_out[36], 16, bd8x8_mp_ptj_coords,
+                    bd8x8_mp_ptj_angles, bd8x8_mp_ptj_idx, n_layers);
+  layered_givens_tx(&temp[52], &temp_out[52], 12, bd8x8_mm_ptj_coords,
+                    bd8x8_mm_ptj_angles, bd8x8_mm_ptj_idx, n_layers);
+
+  // output
+  for (int i = 0; i < 64; i++)
+    output[output_idx[i]] = temp_out[i] / 2;
 
 #if CONFIG_DEBUG
   show_coefficients(input, output, 64);
@@ -751,4 +991,153 @@ void gft_skeleton25_btf(const double *input, double *output) {
 #if CONFIG_DEBUG
   show_coefficients(input, output, 25);
 #endif
+}
+
+void gft_z4x4_mat(const double *input, double *output) {
+  mat_times_vec(input, output, z4x4, 16);
+}
+
+void gft_z4x4_btf(const double *input, double *output) {
+  double temp[16] = {0.0};
+  double temp_out[16] = {0.0};
+
+  int output_idx[16] = {0, 2, 4, 7, 8, 11, 12, 14, 1, 3, 5, 6, 9, 10, 13, 15};
+
+  // stage 1
+  temp[0] = input[0] + input[15];
+  temp[15] = input[0] - input[15];
+  temp[1] = input[1] + input[14];
+  temp[14] = input[1] - input[14];
+  temp[2] = input[2] + input[13];
+  temp[13] = input[2] - input[13];
+  temp[3] = input[3] + input[12];
+  temp[12] = input[3] - input[12];
+  temp[4] = input[4] + input[11];
+  temp[11] = input[4] - input[11];
+  temp[5] = input[5] + input[10];
+  temp[10] = input[5] - input[10];
+  temp[6] = input[6] + input[9];
+  temp[9] = input[6] - input[9];
+  temp[7] = input[7] + input[8];
+  temp[8] = input[7] - input[8];
+
+  // stage 2
+  mat_times_vec(temp, temp_out, z4x4_p, 8);
+  mat_times_vec(&temp[8], &temp_out[8], z4x4_m, 8);
+
+  // output
+  for (int i = 0; i < 16; i++)
+    output[output_idx[i]] = temp_out[i];
+
+#if CONFIG_DEBUG
+  show_coefficients(input, output, 16);
+#endif
+}
+
+void gft_z8x8_mat(const double *input, double *output) {
+  mat_times_vec(input, output, z8x8, 64);
+}
+
+void gft_z8x8_btf(const double *input, double *output) {
+  double temp[64] = {0.0};
+  double temp_out[64] = {0.0};
+
+  int inv1[2][32] = {
+      {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
+       16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+      {63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48,
+       47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32}};
+  int output_idx[64] = {0,  2,  5,  7,  8,  11, 12, 14, 16, 18, 20, 22, 24,
+                        26, 29, 31, 32, 34, 37, 38, 41, 42, 44, 47, 48, 49,
+                        53, 55, 56, 59, 60, 62, 1,  3,  4,  6,  9,  10, 13,
+                        15, 17, 19, 21, 23, 25, 27, 28, 30, 33, 35, 36, 39,
+                        40, 43, 45, 46, 50, 51, 52, 54, 57, 58, 61, 63};
+
+  // stage 1
+  for (int i = 0; i < 32; i++) {
+    temp[inv1[0][i]] = input[inv1[0][i]] + input[inv1[1][i]];
+    temp[inv1[1][i]] = input[inv1[0][i]] - input[inv1[1][i]];
+  }
+
+  // stage 2
+  mat_times_vec(temp, temp_out, z8x8_p, 32);
+  mat_times_vec(&temp[32], &temp_out[32], z8x8_m, 32);
+
+  // output
+  for (int i = 0; i < 64; i++)
+    output[output_idx[i]] = temp_out[i] * INVSQRT2;
+}
+
+void gft_z8x8_tj(const double *input, double *output, int n_givens) {
+  serial_givens_tx(input, output, 64, z8x8_tj_coords, z8x8_tj_angles,
+                   z8x8_tj_idx, n_givens);
+}
+
+void gft_z8x8_ptj(const double *input, double *output, int n_layers) {
+  layered_givens_tx(input, output, 64, z8x8_ptj_coords, z8x8_ptj_angles,
+                    z8x8_ptj_idx, n_layers);
+}
+
+void gft_z8x8_btf_tj(const double *input, double *output, int n_givens) {
+  double temp[64] = {0.0};
+  double temp_out[64] = {0.0};
+
+  int inv1[2][32] = {
+      {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
+       16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+      {63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48,
+       47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32}};
+  int output_idx[64] = {0,  2,  5,  7,  8,  11, 12, 14, 16, 18, 20, 22, 24,
+                        26, 29, 31, 32, 34, 37, 38, 41, 42, 44, 47, 48, 49,
+                        53, 55, 56, 59, 60, 62, 1,  3,  4,  6,  9,  10, 13,
+                        15, 17, 19, 21, 23, 25, 27, 28, 30, 33, 35, 36, 39,
+                        40, 43, 45, 46, 50, 51, 52, 54, 57, 58, 61, 63};
+
+  // stage 1
+  for (int i = 0; i < 32; i++) {
+    temp[inv1[0][i]] = input[inv1[0][i]] + input[inv1[1][i]];
+    temp[inv1[1][i]] = input[inv1[0][i]] - input[inv1[1][i]];
+  }
+
+  // stage 2
+  serial_givens_tx(temp, temp_out, 32, z8x8_p_tj_coords, z8x8_p_tj_angles,
+                   z8x8_p_tj_idx, n_givens / 2);
+  serial_givens_tx(&temp[32], &temp_out[32], 32, z8x8_m_tj_coords,
+                   z8x8_m_tj_angles, z8x8_m_tj_idx, n_givens / 2);
+
+  // output
+  for (int i = 0; i < 64; i++)
+    output[output_idx[i]] = temp_out[i] * INVSQRT2;
+}
+
+void gft_z8x8_btf_ptj(const double *input, double *output, int n_layers) {
+  double temp[64] = {0.0};
+  double temp_out[64] = {0.0};
+
+  int inv1[2][32] = {
+      {0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
+       16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31},
+      {63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 49, 48,
+       47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32}};
+  int output_idx[64] = {0,  2,  5,  7,  8,  11, 12, 14, 16, 18, 20, 22, 24,
+                        26, 29, 31, 32, 34, 37, 38, 41, 42, 44, 47, 48, 49,
+                        53, 55, 56, 59, 60, 62, 1,  3,  4,  6,  9,  10, 13,
+                        15, 17, 19, 21, 23, 25, 27, 28, 30, 33, 35, 36, 39,
+                        40, 43, 45, 46, 50, 51, 52, 54, 57, 58, 61, 63};
+
+  // stage 1
+  for (int i = 0; i < 32; i++) {
+    temp[inv1[0][i]] = input[inv1[0][i]] + input[inv1[1][i]];
+    temp[inv1[1][i]] = input[inv1[0][i]] - input[inv1[1][i]];
+  }
+
+  // stage 2
+  layered_givens_tx(temp, temp_out, 32, z8x8_p_ptj_coords, z8x8_p_ptj_angles,
+                    z8x8_p_ptj_idx, n_layers);
+  layered_givens_tx(&temp[32], &temp_out[32], 32, z8x8_m_ptj_coords,
+                    z8x8_m_ptj_angles, z8x8_m_ptj_idx, n_layers);
+
+  // output
+  for (int i = 0; i < 64; i++)
+    output[output_idx[i]] = temp_out[i] * INVSQRT2;
 }
