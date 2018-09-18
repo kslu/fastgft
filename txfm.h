@@ -45,6 +45,8 @@ void gft_skeleton15_btf(const double *input, double *output);
 void gft_skeleton25_mat(const double *input, double *output);
 void gft_skeleton25_btf(const double *input, double *output);
 
+void gft_z4x4_mat(const double *input, double *output);
+void gft_z4x4_btf(const double *input, double *output);
 void gft_z8x8_mat(const double *input, double *output);
 void gft_z8x8_btf(const double *input, double *output);
 void gft_z8x8_tj(const double *input, double *output, int n_givens);

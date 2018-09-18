@@ -53,14 +53,8 @@ void serial_givens_tx(const double *input, double *output, int n,
   }
 
   // order the frequency
-  int order_list_rowid = 0;
-  while (idx[(order_list_rowid + 1) * (n + 1)] < n_givens)
-    order_list_rowid++;
-
-  // fprintf(stderr, "[%d,%d,%d]", n_givens, order_list_rowid,
-  // idx[order_list_rowid*(n+1)]);
   for (int i = 0; i < n; i++)
-    output[idx[order_list_rowid * (n + 1) + i + 1]] = temp[i];
+    output[idx[n_givens * n + i]] = temp[i];
 }
 
 void layered_givens_tx(const double *input, double *output, int n,
@@ -92,12 +86,8 @@ void layered_givens_tx(const double *input, double *output, int n,
     }
   }
   // order the frequency
-  int order_list_rowid = 0;
-  while (idx[(order_list_rowid + 1) * (n + 1)] < n_layers)
-    order_list_rowid++;
-
   for (int i = 0; i < n; i++)
-    output[idx[order_list_rowid * (n + 1) + i + 1]] = temp[i];
+    output[idx[n_layers * n + i]] = temp[i];
 }
 
 void gft_star10_mat(const double *input, double *output) {
