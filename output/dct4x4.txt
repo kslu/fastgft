@@ -1,0 +1,4 @@
+#input = 20000
+Matrix GFT:    0.02245000
+Butterfly GFT: 0.00658100
+Separable GFT: 0.00562100
