@@ -151,16 +151,16 @@ print_c_gftmatrix(Upm/2,'bd8x8_pm','c_code/bd8x8_pm.txt');
 print_c_gftmatrix(Ump/2,'bd8x8_mp','c_code/bd8x8_mp.txt');
 print_c_gftmatrix(Umm/2,'bd8x8_mm','c_code/bd8x8_mm.txt');
 
-print_c_ptj(L,'bd8x8_ptj',[],[],[],120);
-print_c_ptj(L1(idpp,idpp),'bd8x8_pp_ptj',[],[],[],100);
-print_c_ptj(L1(idpm,idpm),'bd8x8_pm_ptj',[],[],[],100);
-print_c_ptj(L1(idmp,idmp),'bd8x8_mp_ptj',[],[],[],100);
-print_c_ptj(L1(idmm,idmm),'bd8x8_mm_ptj',[],[],[],100);
-print_c_tj(L,'bd8x8_tj',[],[],[],4000);
-print_c_tj(L1(idpp,idpp),'bd8x8_pp_tj',[],[],[],3000);
-print_c_tj(L1(idpm,idpm),'bd8x8_pm_tj',[],[],[],3000);
-print_c_tj(L1(idmp,idmp),'bd8x8_mp_tj',[],[],[],3000);
-print_c_tj(L1(idmm,idmm),'bd8x8_mm_tj',[],[],[],3000);
+print_c_ptj_lift(L,'bd8x8_ptj',[],[],[],120);
+print_c_ptj_lift(L1(idpp,idpp),'bd8x8_pp_ptj',[],[],[],100);
+print_c_ptj_lift(L1(idpm,idpm),'bd8x8_pm_ptj',[],[],[],100);
+print_c_ptj_lift(L1(idmp,idmp),'bd8x8_mp_ptj',[],[],[],100);
+print_c_ptj_lift(L1(idmm,idmm),'bd8x8_mm_ptj',[],[],[],100);
+print_c_tj_lift(L,'bd8x8_tj',[],[],[],4000);
+print_c_tj_lift(L1(idpp,idpp),'bd8x8_pp_tj',[],[],[],3000);
+print_c_tj_lift(L1(idpm,idpm),'bd8x8_pm_tj',[],[],[],3000);
+print_c_tj_lift(L1(idmp,idmp),'bd8x8_mp_tj',[],[],[],3000);
+print_c_tj_lift(L1(idmm,idmm),'bd8x8_mm_tj',[],[],[],3000);
 
 %% 4x4 uniform grid
 fprintf(sprintf('Generating code for dct4x4...\n'));
@@ -304,17 +304,17 @@ oidx_z4x4=zeros(1,16); oidx_z4x4(z4x4_isortd)=1:16;
 [~,z8x8_isortd]=sort([diag(Dz8_p)',diag(Dz8_m)']);
 oidx_z8x8=zeros(1,64); oidx_z8x8(z8x8_isortd)=1:64;
 
-print_c_ptj(Lz8,'z8x8_ptj',[],[],[],120);
-print_c_ptj(Lz8_1(1:32,1:32),'z8x8_p_ptj',[],[],[],100);
-print_c_ptj(Lz8_1(33:64,33:64),'z8x8_m_ptj',[],[],[],100);
-print_c_tj(Lz8,'z8x8_tj',[],[],[],4000);
-print_c_tj(Lz8_1(1:32,1:32),'z8x8_p_tj',[],[],[],3000);
-print_c_tj(Lz8_1(33:64,33:64),'z8x8_m_tj',[],[],[],3000);
+print_c_ptj_lift(Lz8,'z8x8_ptj',[],[],[],120);
+print_c_ptj_lift(Lz8_1(1:32,1:32),'z8x8_p_ptj',[],[],[],100);
+print_c_ptj_lift(Lz8_1(33:64,33:64),'z8x8_m_ptj',[],[],[],100);
+print_c_tj_lift(Lz8,'z8x8_tj',[],[],[],4000);
+print_c_tj_lift(Lz8_1(1:32,1:32),'z8x8_p_tj',[],[],[],3000);
+print_c_tj_lift(Lz8_1(33:64,33:64),'z8x8_m_tj',[],[],[],3000);
 
 
 %% move the c_code folder
 system('mv *tj_coords.h c_code/');
-system('mv *tj_angles.h c_code/');
+system('mv *tj_lifts.h c_code/');
 system('mv *tj_idx.h c_code/');
 
 %% concatenate all c code
@@ -337,20 +337,20 @@ end
 files_tj_cat={'bd8x8','bd8x8_pp','bd8x8_pm','bd8x8_mp','bd8x8_mm','z8x8',...
     'z8x8_p','z8x8_m'};
 
-out_tj='c_code/givens_tj.h';
+out_tj='c_code/lifting_tj.h';
 for i=1:length(files_tj_cat)
     fstr_tj_c=sprintf('c_code/%s_tj_coords.h',files_tj_cat{i});
-    fstr_tj_a=sprintf('c_code/%s_tj_angles.h',files_tj_cat{i});
+    fstr_tj_a=sprintf('c_code/%s_tj_lifts.h',files_tj_cat{i});
     fstr_tj_i=sprintf('c_code/%s_tj_idx.h',files_tj_cat{i});
     system(['cat ', fstr_tj_c, ' >> ', out_tj]);
     system(['cat ', fstr_tj_a, ' >> ', out_tj]);
     system(['cat ', fstr_tj_i, ' >> ', out_tj]);
 end
 
-out_ptj='c_code/givens_ptj.h';
+out_ptj='c_code/lifting_ptj.h';
 for i=1:length(files_tj_cat)
     fstr_ptj_c=sprintf('c_code/%s_ptj_coords.h',files_tj_cat{i});
-    fstr_ptj_a=sprintf('c_code/%s_ptj_angles.h',files_tj_cat{i});
+    fstr_ptj_a=sprintf('c_code/%s_ptj_lifts.h',files_tj_cat{i});
     fstr_ptj_i=sprintf('c_code/%s_ptj_idx.h',files_tj_cat{i});
     system(['cat ', fstr_ptj_c, ' >> ', out_ptj]);
     system(['cat ', fstr_ptj_a, ' >> ', out_ptj]);

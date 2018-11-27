@@ -1,4 +1,4 @@
-function print_c_ptj(L,txname,coords_file,angle_file,idx_file,num_layers)
+function print_c_ptj_lift(L,txname,coords_file,lifts_file,idx_file,num_layers)
 % print_c_ptj(L,txname,cfilename,afilename,err_thr)
 if nargin<6
     num_layers=100;
@@ -6,8 +6,8 @@ end
 if nargin<5 || isempty(idx_file)
     idx_file = [txname, '_idx.h'];
 end
-if nargin<4 || isempty(angle_file)
-    angle_file=[txname, '_angles.h'];
+if nargin<4 || isempty(lifts_file)
+    lifts_file=[txname, '_lifts.h'];
 end
 if nargin<3 || isempty(coords_file)
     coords_file=[txname, '_coords.h'];
@@ -24,7 +24,7 @@ n_per_line_coords=8;
 n_per_line_double=2;
 n_per_line_idx=15;
 fcid=fopen(coords_file, 'w+');
-faid=fopen(angle_file, 'w+');
+faid=fopen(lifts_file, 'w+');
 fiid=fopen(idx_file, 'w+');
 
 % print coordinates
@@ -32,7 +32,7 @@ fwrite(fcid, ['static const int ', txname, '_coords[', ...
     sprintf('%d * %d * 2] = {\n',n_layers,n/2)], 'char');
 
 % print cos and sin
-fwrite(faid, ['static const double ', txname, '_angles[', ...
+fwrite(faid, ['static const double ', txname, '_lifts[', ...
     sprintf('%d * %d * 2] = {\n',n_layers,n/2)], 'char');
 
 % print order of GFT coefficients
@@ -64,7 +64,14 @@ for i=1:n_layers
             fwrite(fcid, sprintf('\n  '));
         end
         
-        fwrite(faid, sprintf('%.10f, %.10f, ',anglecos(j),anglesin(j)));
+        if abs(anglesin(j))<1e-10
+            lift1=0;
+            lift2=0;
+        else
+            lift1=(anglecos(j)-1)/anglesin(j);
+            lift2=anglesin(j);
+        end
+        fwrite(faid, sprintf('%.10f, %.10f, ',lift1,lift2));
         if mod(j,n_per_line_double)==0 && j~=n/2
             fwrite(faid, sprintf('\n  '));
         end

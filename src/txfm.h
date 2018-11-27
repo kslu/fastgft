@@ -8,6 +8,7 @@
 #include <time.h>
 
 #define CONFIG_DEBUG 0
+#define CONFIG_USE_LIFTING_FOR_GIVENS 0
 #define MAX_NUM_DATA 2000
 #define BATCH_SIZE 1000
 #define MAX_N 100

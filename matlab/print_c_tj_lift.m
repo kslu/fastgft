@@ -1,4 +1,4 @@
-function print_c_tj(L,txname,coord_file,angle_filename,idx_file,num_givens)
+function print_c_tj_lift(L,txname,coord_file,lifts_filename,idx_file,num_givens)
 % not finished yet
 if nargin<6
     num_givens=1000;
@@ -6,8 +6,8 @@ end
 if nargin<5 || isempty(idx_file)
     idx_file=[txname, '_idx.h'];
 end
-if nargin<4 || isempty(angle_filename)
-    angle_filename=[txname, '_angles.h'];
+if nargin<4 || isempty(lifts_filename)
+    lifts_filename=[txname, '_lifts.h'];
 end
 if nargin<3 || isempty(coord_file)
     coord_file=[txname, '_coords.h'];
@@ -32,7 +32,7 @@ n_per_line_coords=8;
 n_per_line_double=2;
 n_per_line_idx=15;
 fcid=fopen(coord_file, 'w+');
-faid=fopen(angle_filename, 'w+');
+faid=fopen(lifts_filename, 'w+');
 fiid=fopen(idx_file, 'w+');
 
 % print coordinates
@@ -40,7 +40,7 @@ fwrite(fcid, ['static const int ', txname, '_coords[', ...
     sprintf('%d * 2 + 2] = {\n  ', num_givens_found)], 'char');
 
 % print cos and sin
-fwrite(faid, ['static const double ', txname, '_angles[', ...
+fwrite(faid, ['static const double ', txname, '_lifts[', ...
     sprintf('%d * 2] = {\n  ', num_givens_found)], 'char');
 
 % print order of GFT coefficients
@@ -61,7 +61,14 @@ for i=1:num_givens_found
         fwrite(fcid, sprintf('\n  '));
     end
 
-    fwrite(faid, sprintf('%.10f, %.10f, ',anglecos,anglesin));
+    if abs(anglesin)<1e-10
+        lift1=0;
+        lift2=0;
+    else
+        lift1=(anglecos-1)/anglesin;
+        lift2=anglesin;
+    end
+    fwrite(faid, sprintf('%.10f, %.10f, ',lift1,lift2));
     if mod(i,n_per_line_double)==0
         fwrite(faid, sprintf('\n  '));
     end

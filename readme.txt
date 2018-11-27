@@ -20,6 +20,9 @@ Here is a brief summary of how to produce the main results.
    second argument specifies the file to be output. Input data of 20000
    samples used in the paper is given in the input/ folder.
 
+   To run all experiments in the paper, type
+     ./run_speed_test.sh
+
 2. To reproduce the figures in the paper, use the MATLAB code in the
    matlab/ folder. The main script is demo_rtvserr.m
 
