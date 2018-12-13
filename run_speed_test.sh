@@ -1,4 +1,4 @@
-# !/bin/bash
+#!/bin/bash
 
 INPUT10="input/data10_20000.txt"
 INPUT15="input/data15_20000.txt"

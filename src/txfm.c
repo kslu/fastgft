@@ -33,8 +33,8 @@ void mat_times_vec(const double *input, double *output, const double *gftmtx,
 
 #if CONFIG_USE_LIFTING_FOR_GIVENS
 void serial_givens_lifting_tx(const double *input, double *output, int n,
-                      const int *coords, const double *lifts, const int *idx,
-                      int n_givens) {
+                              const int *coords, const double *lifts,
+                              const int *idx, int n_givens) {
   int ii, jj;
   double xi, xj;
   double temp[MAX_N] = {0.0};
@@ -62,8 +62,8 @@ void serial_givens_lifting_tx(const double *input, double *output, int n,
 }
 
 void layered_givens_lifting_tx(const double *input, double *output, int n,
-                       const int *coords, const double *lifts, const int *idx,
-                       int n_layers) {
+                               const int *coords, const double *lifts,
+                               const int *idx, int n_layers) {
   int ii, jj;
   double xi, xj;
   double temp[MAX_N] = {0.0};
@@ -149,7 +149,7 @@ void layered_givens_tx(const double *input, double *output, int n,
   for (int i = 0; i < n; i++)
     output[idx[n_layers * n + i]] = temp[i];
 }
-#endif  // CONFIG_USE_LIFTING_FOR_GIVENS
+#endif // CONFIG_USE_LIFTING_FOR_GIVENS
 
 void gft_star10_mat(const double *input, double *output) {
   mat_times_vec(input, output, star10, 10);
@@ -444,7 +444,7 @@ void gft_bd8x8_btf(const double *input, double *output) {
 void gft_bd8x8_tj(const double *input, double *output, int n_givens) {
 #if CONFIG_USE_LIFTING_FOR_GIVENS
   serial_givens_lifting_tx(input, output, 64, bd8x8_tj_coords, bd8x8_tj_lifts,
-                   bd8x8_tj_idx, n_givens);
+                           bd8x8_tj_idx, n_givens);
 #else
   serial_givens_tx(input, output, 64, bd8x8_tj_coords, bd8x8_tj_angles,
                    bd8x8_tj_idx, n_givens);
@@ -453,8 +453,8 @@ void gft_bd8x8_tj(const double *input, double *output, int n_givens) {
 
 void gft_bd8x8_ptj(const double *input, double *output, int n_layers) {
 #if CONFIG_USE_LIFTING_FOR_GIVENS
-  layered_givens_lifting_tx(input, output, 64, bd8x8_ptj_coords, bd8x8_ptj_lifts,
-                    bd8x8_ptj_idx, n_layers);
+  layered_givens_lifting_tx(input, output, 64, bd8x8_ptj_coords,
+                            bd8x8_ptj_lifts, bd8x8_ptj_idx, n_layers);
 #else
   layered_givens_tx(input, output, 64, bd8x8_ptj_coords, bd8x8_ptj_angles,
                     bd8x8_ptj_idx, n_layers);
@@ -521,14 +521,13 @@ void gft_bd8x8_btf_tj(const double *input, double *output, int n_givens) {
   // stage 3
 #if CONFIG_USE_LIFTING_FOR_GIVENS
   serial_givens_lifting_tx(temp, temp_out, 20, bd8x8_pp_tj_coords,
-                           bd8x8_pp_tj_lifts,
-                   bd8x8_pp_tj_idx, n_givens / 4);
+                           bd8x8_pp_tj_lifts, bd8x8_pp_tj_idx, n_givens / 4);
   serial_givens_lifting_tx(&temp[20], &temp_out[20], 16, bd8x8_pm_tj_coords,
-                   bd8x8_pm_tj_lifts, bd8x8_pm_tj_idx, n_givens / 4);
+                           bd8x8_pm_tj_lifts, bd8x8_pm_tj_idx, n_givens / 4);
   serial_givens_lifting_tx(&temp[36], &temp_out[36], 16, bd8x8_mp_tj_coords,
-                   bd8x8_mp_tj_lifts, bd8x8_mp_tj_idx, n_givens / 4);
+                           bd8x8_mp_tj_lifts, bd8x8_mp_tj_idx, n_givens / 4);
   serial_givens_lifting_tx(&temp[52], &temp_out[52], 12, bd8x8_mm_tj_coords,
-                   bd8x8_mm_tj_lifts, bd8x8_mm_tj_idx, n_givens / 4);
+                           bd8x8_mm_tj_lifts, bd8x8_mm_tj_idx, n_givens / 4);
 #else
   serial_givens_tx(temp, temp_out, 20, bd8x8_pp_tj_coords, bd8x8_pp_tj_angles,
                    bd8x8_pp_tj_idx, n_givens / 4);
@@ -608,13 +607,13 @@ void gft_bd8x8_btf_ptj(const double *input, double *output, int n_layers) {
   // stage 3
 #if CONFIG_USE_LIFTING_FOR_GIVENS
   layered_givens_lifting_tx(temp, temp_out, 20, bd8x8_pp_ptj_coords,
-                    bd8x8_pp_ptj_lifts, bd8x8_pp_ptj_idx, n_layers);
+                            bd8x8_pp_ptj_lifts, bd8x8_pp_ptj_idx, n_layers);
   layered_givens_lifting_tx(&temp[20], &temp_out[20], 16, bd8x8_pm_ptj_coords,
-                    bd8x8_pm_ptj_lifts, bd8x8_pm_ptj_idx, n_layers);
+                            bd8x8_pm_ptj_lifts, bd8x8_pm_ptj_idx, n_layers);
   layered_givens_lifting_tx(&temp[36], &temp_out[36], 16, bd8x8_mp_ptj_coords,
-                    bd8x8_mp_ptj_lifts, bd8x8_mp_ptj_idx, n_layers);
+                            bd8x8_mp_ptj_lifts, bd8x8_mp_ptj_idx, n_layers);
   layered_givens_lifting_tx(&temp[52], &temp_out[52], 12, bd8x8_mm_ptj_coords,
-                    bd8x8_mm_ptj_lifts, bd8x8_mm_ptj_idx, n_layers);
+                            bd8x8_mm_ptj_lifts, bd8x8_mm_ptj_idx, n_layers);
 #else
   layered_givens_tx(temp, temp_out, 20, bd8x8_pp_ptj_coords,
                     bd8x8_pp_ptj_angles, bd8x8_pp_ptj_idx, n_layers);
@@ -1153,7 +1152,7 @@ void gft_z8x8_btf(const double *input, double *output) {
 void gft_z8x8_tj(const double *input, double *output, int n_givens) {
 #if CONFIG_USE_LIFTING_FOR_GIVENS
   serial_givens_lifting_tx(input, output, 64, z8x8_tj_coords, z8x8_tj_lifts,
-                   z8x8_tj_idx, n_givens);
+                           z8x8_tj_idx, n_givens);
 #else
   serial_givens_tx(input, output, 64, z8x8_tj_coords, z8x8_tj_angles,
                    z8x8_tj_idx, n_givens);
@@ -1163,7 +1162,7 @@ void gft_z8x8_tj(const double *input, double *output, int n_givens) {
 void gft_z8x8_ptj(const double *input, double *output, int n_layers) {
 #if CONFIG_USE_LIFTING_FOR_GIVENS
   layered_givens_lifting_tx(input, output, 64, z8x8_ptj_coords, z8x8_ptj_lifts,
-                    z8x8_ptj_idx, n_layers);
+                            z8x8_ptj_idx, n_layers);
 #else
   layered_givens_tx(input, output, 64, z8x8_ptj_coords, z8x8_ptj_angles,
                     z8x8_ptj_idx, n_layers);
@@ -1193,10 +1192,10 @@ void gft_z8x8_btf_tj(const double *input, double *output, int n_givens) {
 
   // stage 2
 #if CONFIG_USE_LIFTING_FOR_GIVENS
-  serial_givens_lifting_tx(temp, temp_out, 32, z8x8_p_tj_coords, z8x8_p_tj_lifts,
-                   z8x8_p_tj_idx, n_givens / 2);
+  serial_givens_lifting_tx(temp, temp_out, 32, z8x8_p_tj_coords,
+                           z8x8_p_tj_lifts, z8x8_p_tj_idx, n_givens / 2);
   serial_givens_lifting_tx(&temp[32], &temp_out[32], 32, z8x8_m_tj_coords,
-                   z8x8_m_tj_lifts, z8x8_m_tj_idx, n_givens / 2);
+                           z8x8_m_tj_lifts, z8x8_m_tj_idx, n_givens / 2);
 #else
   serial_givens_tx(temp, temp_out, 32, z8x8_p_tj_coords, z8x8_p_tj_angles,
                    z8x8_p_tj_idx, n_givens / 2);
@@ -1231,10 +1230,10 @@ void gft_z8x8_btf_ptj(const double *input, double *output, int n_layers) {
 
   // stage 2
 #if CONFIG_USE_LIFTING_FOR_GIVENS
-  layered_givens_lifting_tx(temp, temp_out, 32, z8x8_p_ptj_coords, z8x8_p_ptj_lifts,
-                    z8x8_p_ptj_idx, n_layers);
+  layered_givens_lifting_tx(temp, temp_out, 32, z8x8_p_ptj_coords,
+                            z8x8_p_ptj_lifts, z8x8_p_ptj_idx, n_layers);
   layered_givens_lifting_tx(&temp[32], &temp_out[32], 32, z8x8_m_ptj_coords,
-                    z8x8_m_ptj_lifts, z8x8_m_ptj_idx, n_layers);
+                            z8x8_m_ptj_lifts, z8x8_m_ptj_idx, n_layers);
 #else
   layered_givens_tx(temp, temp_out, 32, z8x8_p_ptj_coords, z8x8_p_ptj_angles,
                     z8x8_p_ptj_idx, n_layers);
