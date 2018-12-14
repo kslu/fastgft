@@ -292,6 +292,152 @@ void gft_star100_btf(const double *input, double *output) {
 #endif
 }
 
+void gft_cycle12_mat(const double *input, double *output) {
+  mat_times_vec(input, output, cycle12, 12);
+#if CONFIG_DEBUG
+  show_coefficients(input, output, 12);
+#endif
+}
+
+void gft_cycle12_btf(const double *input, double *output) {
+  double temp[12] = {0.0};
+  double temp1[12] = {0.0};
+  double temp_out[12] = {0.0};
+
+  int inv1[2][6] = {{0, 1, 2, 3, 4, 5}, {11, 10, 9, 8, 7, 6}};
+  int inv2[2][6] = {{0, 1, 2, 11, 10, 9}, {5, 4, 3, 6, 7, 8}};
+
+  int output_idx[12] = {0,8,3,1,5,9,7,4,11,2,6,10};
+  //int output_idx[12] = {0, 8, 3, 1, 5, 9, 2, 6, 10, 4, 11, 7};
+
+  // stage 1
+  for (int i = 0; i < 6; i++) {
+    temp[inv1[0][i]] = input[inv1[0][i]] + input[inv1[1][i]];
+    temp[inv1[1][i]] = input[inv1[0][i]] - input[inv1[1][i]];
+  }
+
+  // stage 2
+  for (int i = 0; i < 6; i++) {
+    temp1[inv2[0][i]] = temp[inv2[0][i]] + temp[inv2[1][i]];
+    temp1[inv2[1][i]] = temp[inv2[0][i]] - temp[inv2[1][i]];
+  }
+
+  // stage 3
+  temp[1] = SQRT2 * temp1[1];
+  temp[7] = SQRT2 * temp1[7];
+  temp[0] = temp1[0] + temp1[2];
+  temp[2] = temp1[0] - temp1[2];
+  temp[8] = temp1[8] + temp1[6];
+  temp[6] = temp1[8] - temp1[6];
+  mat_times_vec(&temp1[3], &temp_out[3], cycle12_pm, 3);
+  mat_times_vec(&temp1[9], &temp_out[9], cycle12_mp, 3);
+
+  // stage 4
+  mat_times_vec(temp, temp_out, cycle12_ppp, 2);
+  temp_out[2] = temp[2] / 2 * INVSQRT2;  // cycle12_ppm
+  mat_times_vec(&temp[7], &temp_out[7], cycle12_mmp, 2);
+  temp_out[6] = temp[6] / 2 * INVSQRT2;  // cycle12_mmm
+
+  // output
+  for (int i = 0; i < 12; i++)
+    output[output_idx[i]] = temp_out[i];
+
+#if CONFIG_DEBUG
+  show_coefficients(input, output, 12);
+#endif
+}
+
+void gft_cycle80_mat(const double *input, double *output) {
+  mat_times_vec(input, output, cycle80, 80);
+#if CONFIG_DEBUG
+  show_coefficients(input, output, 80);
+#endif
+}
+
+void gft_cycle80_btf(const double *input, double *output) {
+  double temp[80] = {0.0};
+  double temp1[80] = {0.0};
+  double temp_out[80] = {0.0};
+
+  int inv1[2][40] = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+    14, 15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,
+    35,36,37,38,39}, {79,78,77,76,75,74,73,72,71,70,69,68,67,66,65,
+    64,63,62,61,60,59,58,57,56,55,54,53,52,51,50,49,48,47,46,45,44,
+    43,42,41,40}};
+  int inv2[2][40] = {{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,
+  79,78,77,76,75,74,73,72,71,70,69,68,67,66,65,64,63,62,61,60},
+  {39,38,37,36,35,34,33,32,31,30,29,28,27,26,25,24,23,22,21,20,
+  40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59}};
+  int inv3[2][20] = {{0,1,2,3,4,5,6,7,8,9,59,58,57,56,55,54,53,52,51,50},
+  {19,18,17,16,15,14,13,12,11,10,40,41,42,43,44,45,46,47,48,49}};
+  int inv4[2][10] = {{0,1,2,3,4,49,48,47,46,45},{9,8,7,6,5,40,41,42,43,44}};
+
+  int output_idx[80] = {0,31,63,16,47,7,23,39,55,71,3,11,19,27,35,43,51,59,
+  67,75,1,5,9,13,17,21,25,29,33,37,41,45,49,53,57,61,65,69,73,77,
+  32,64,15,48,79,8,24,40,56,72,4,12,20,28,36,44,52,60,68,76,2,6,
+  10,14,18,22,26,30,34,38,42,46,50,54,58,62,66,70,74,78};
+  //int output_idx[80] = {0, 31,63,16,47,7,23,39,55,71,3,11,19,27,35,43,51,59,
+  //67,75,1,5,9,13,17,21,25,29,33,37,41,45,49,53,57,61,65,69,73,77,2,6,10,14,
+  //18,22,26,30,34,38,42,46,50,54,58,62,66,70,74,78,4,12,20,28,36,44,52,60,68,
+  //76,8,24,40,56,72,15,48,79,32,64};
+
+  // stage 1
+  for (int i = 0; i < 40; i++) {
+    temp[inv1[0][i]] = input[inv1[0][i]] + input[inv1[1][i]];
+    temp[inv1[1][i]] = input[inv1[0][i]] - input[inv1[1][i]];
+  }
+
+  // stage 2
+  for (int i = 0; i < 40; i++) {
+    temp1[inv2[0][i]] = temp[inv2[0][i]] + temp[inv2[1][i]];
+    temp1[inv2[1][i]] = temp[inv2[0][i]] - temp[inv2[1][i]];
+  }
+
+  // stage 3
+  for (int i = 0; i < 20; i++) {
+    temp[inv3[0][i]] = temp1[inv3[0][i]] + temp1[inv3[1][i]];
+    temp[inv3[1][i]] = temp1[inv3[0][i]] - temp1[inv3[1][i]];
+  }
+  mat_times_vec(&temp1[20], &temp_out[20], cycle80_pm, 20);
+  mat_times_vec(&temp1[60], &temp_out[60], cycle80_mp, 20);
+
+  // stage 4
+  for (int i = 0; i < 10; i++) {
+    temp1[inv4[0][i]] = temp[inv4[0][i]] + temp[inv4[1][i]];
+    temp1[inv4[1][i]] = temp[inv4[0][i]] - temp[inv4[1][i]];
+  }
+  mat_times_vec(&temp[10], &temp_out[10], cycle80_ppm, 10);
+  mat_times_vec(&temp[50], &temp_out[50], cycle80_mmp, 10);
+
+  // stage 5
+  temp[2] = SQRT2 * temp1[2];
+  temp[42] = SQRT2 * temp1[42];
+  temp[0] = temp1[0] + temp1[4];
+  temp[4] = temp1[0] - temp1[4];
+  temp[1] = temp1[1] + temp1[3];
+  temp[3] = temp1[1] - temp1[3];
+  temp[44] = temp1[44] + temp1[40];
+  temp[40] = temp1[44] - temp1[40];
+  temp[43] = temp1[43] + temp1[41];
+  temp[41] = temp1[43] - temp1[41];
+  mat_times_vec(&temp1[5], &temp_out[5], cycle80_pppm, 5);
+  mat_times_vec(&temp1[45], &temp_out[45], cycle80_mmmp, 5);
+
+  // stage 6
+  mat_times_vec(temp, temp_out, cycle80_ppppp, 3);
+  mat_times_vec(&temp[3], &temp_out[3], cycle80_ppppm, 2);
+  mat_times_vec(&temp[42], &temp_out[42], cycle80_mmmmp, 3);
+  mat_times_vec(&temp[40], &temp_out[40], cycle80_mmmmm, 2);
+
+  // output
+  for (int i = 0; i < 80; i++)
+    output[output_idx[i]] = temp_out[i];
+
+#if CONFIG_DEBUG
+  show_coefficients(input, output, 80);
+#endif
+}
+
 void gft_bd4x4_mat(const double *input, double *output) {
   mat_times_vec(input, output, bd4x4, 16);
 #if CONFIG_DEBUG

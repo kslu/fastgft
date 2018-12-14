@@ -25,6 +25,11 @@ void gft_star10_btf(const double *input, double *output);
 void gft_star100_mat(const double *input, double *output);
 void gft_star100_btf(const double *input, double *output);
 
+void gft_cycle12_mat(const double *input, double *output);
+void gft_cycle12_btf(const double *input, double *output);
+void gft_cycle80_mat(const double *input, double *output);
+void gft_cycle80_btf(const double *input, double *output);
+
 void gft_bd4x4_mat(const double *input, double *output);
 void gft_bd4x4_btf(const double *input, double *output);
 void gft_bd8x8_mat(const double *input, double *output);
