@@ -1,55 +1,6 @@
 %system('rm *.h');
 system('rm c_code/*');
 
-%% skeletal graph 15
-fprintf(sprintf('Generating code for sk15...\n'));
-
-Wsk=skeleton15;
-Lsk=w2l(Wsk);
-[Usk,Dst]=eiga(Lsk);
-Bsk=bmat(15,[4,5,6,10,11,12,15,14,13,9,8,7]);
-Lsk_1=Bsk*Lsk*Bsk;
-Lsk_p=Lsk_1([1,2,3,10,11,12,13,14,15],[1,2,3,10,11,12,13,14,15]);
-Lsk_m=Lsk_1([4,5,6],[4,5,6]);  % Lm1=Lm2
-[Usk_p,Dsk_p]=eiga(Lsk_p);
-[Usk_m,Dsk_m]=eiga(Lsk_m);
-
-print_c_gftmatrix(Usk,'sk15','c_code/sk15.txt');
-print_c_gftmatrix(Usk_p/sqrt(2),'sk15_p','c_code/sk15_p.txt');
-print_c_gftmatrix(Usk_m/sqrt(2),'sk15_m','c_code/sk15_m.txt');
-
-%% skeletal graph 25
-fprintf(sprintf('Generating code for sk25...\n'));
-
-alist=[1,2,3,3,5,9,5,6,7,9,10,11,1,13,14,15,1,17,18,19,8,23,12,25;
-       2,21,21,4,21,21,6,7,8,10,11,12,13,14,15,16,17,18,19,20,23,22,25,24]';
-wlist=ones(1,24);
-W=adjlist2mat(25,alist,wlist);
-L=w2l(W);
-[Usk25,Dsk25]=eiga(L);
-
-idx_r=[5,6,7,8,22,23,13,14,15,16];
-idx_l=[20,19,18,17,25,24,12,11,10,9];
-idx_m=[1,2,3,4,21];
-B1=bmat(25,[idx_l,idx_r]);
-L1=B1*L*B1;
-
-%figure; imagesc(L1([idx_m,idx_l,idx_r],[idx_m,idx_l,idx_r]));
-idx_p=sort([idx_m, idx_l]);
-idx_m1=[5,6,7,8,22,23];
-idx_m2=[13,14,15,16];
-Lp=L1(idx_p,idx_p);
-Lm1=L1(idx_m1,idx_m1);
-Lm2=L1(idx_m2,idx_m2);
-[Usk25_p,Dsk25_p]=eiga(Lp);
-[Usk25_m1,Dsk25_m1]=eiga(Lm1);
-[Usk25_m2,Dsk25_m2]=eiga(Lm2);
-
-print_c_gftmatrix(Usk25,'sk25','c_code/sk25.txt');
-print_c_gftmatrix(Usk25_p/sqrt(2),'sk25_p','c_code/sk25_p.txt');
-print_c_gftmatrix(Usk25_m1/sqrt(2),'sk25_m1','c_code/sk25_m1.txt');
-print_c_gftmatrix(Usk25_m2/sqrt(2),'sk25_m2','c_code/sk25_m2.txt');
-
 %% star graph 10
 fprintf(sprintf('Generating code for star10...\n'));
 
@@ -85,6 +36,106 @@ L6=B6*B5*B4*B3*B2*B1*L*B1*B2*B3*B4*B5*B6;
 [Ustar100_pppppp,Dstar100_pppppp]=eiga(L6(1:5,1:5));
 print_c_gftmatrix(Ustar100,'star100','c_code/star100.txt');
 print_c_gftmatrix(Ustar100_pppppp/8,'star100_pppppp','c_code/star100_pppppp.txt');
+
+%% cycle graph 12
+fprintf(sprintf('Generating code for cycle12...\n'));
+n=12;
+[Wc12,Lc12]=cyclegraph(n);
+[Uc12,Dc12]=eiga(Lc12);
+print_c_gftmatrix(Uc12,'cycle12','c_code/cycle12.txt');
+
+inv1=1:n;
+inv2=[1,2,3,12,11,10,9,8,7,4,5,6];
+inv3=[1,9,7,3];
+B1=bmat(n,inv1);
+B2=bmat(n,inv2);
+B3=bmat(n,inv3);
+L3_c12=B3*B2*B1*Lc12*B1*B2*B3;
+
+idx_c12_ppp=[1,2];
+idx_c12_ppm=3;
+idx_c12_pm=[4,5,6];
+idx_c12_mp=[10,11,12];
+idx_c12_mmp=[8,9];
+idx_c12_mmm=7;
+
+Lc12_ppp=L3_c12(idx_c12_ppp,idx_c12_ppp);
+Lc12_pm=L3_c12(idx_c12_pm,idx_c12_pm);
+Lc12_mp=L3_c12(idx_c12_mp,idx_c12_mp);
+Lc12_mmp=L3_c12(idx_c12_mmp,idx_c12_mmp);
+[Uc12_ppp,Dc12_ppp]=eiga(Lc12_ppp);
+Uc12_ppm=1;
+[Uc12_pm,Dc12_pm]=eiga(Lc12_pm);
+[Uc12_mp,Dc12_mp]=eiga(Lc12_mp);
+[Uc12_mmp,Dc12_mmp]=eiga(Lc12_mmp);
+Uc12_mmm=1;
+
+print_c_gftmatrix(Uc12_ppp/2/sqrt(2),'cycle12_ppp','c_code/cycle12_ppp.txt');
+print_c_gftmatrix(Uc12_pm/2,'cycle12_pm','c_code/cycle12_pm.txt');
+print_c_gftmatrix(Uc12_mp/2,'cycle12_mp','c_code/cycle12_mp.txt');
+print_c_gftmatrix(Uc12_mmp/2/sqrt(2),'cycle12_mmp','c_code/cycle12_mmp.txt');
+
+%% cycle graph 80
+fprintf(sprintf('Generating code for cycle80...\n'));
+n=80;
+[Wc80,Lc80]=cyclegraph(n);
+[Uc80,Dc80]=eiga(Lc80);
+print_c_gftmatrix(Uc80,'cycle80','c_code/cycle80.txt');
+
+inv1=1:n;
+inv2=[1:20,80:-1:41,21:40];
+inv3=[1:10,60:-1:41,11:20];
+inv4=[1:5,50:-1:41,6:10];
+inv5=[1,2,45,44,42,41,4,5];
+B1=bmat(n,inv1);
+B2=bmat(n,inv2);
+B3=bmat(n,inv3);
+B4=bmat(n,inv4);
+B5=bmat(n,inv5);
+L5=B5*B4*B3*B2*B1*Lc80*B1*B2*B3*B4*B5;
+
+idx_c80_ppppp=[1,2,3];
+idx_c80_ppppm=[4,5];
+idx_c80_pppm=6:10;
+idx_c80_ppm=11:20;
+idx_c80_pm=21:40;
+idx_c80_mp=61:80;
+idx_c80_mmp=51:60;
+idx_c80_mmmp=46:50;
+idx_c80_mmmmp=43:45;
+idx_c80_mmmmm=41:42;
+
+Lc80_ppppp=L5(idx_c80_ppppp,idx_c80_ppppp);
+Lc80_ppppm=L5(idx_c80_ppppm,idx_c80_ppppm);
+Lc80_pppm=L5(idx_c80_pppm,idx_c80_pppm);
+Lc80_ppm=L5(idx_c80_ppm,idx_c80_ppm);
+Lc80_pm=L5(idx_c80_pm,idx_c80_pm);
+Lc80_mp=L5(idx_c80_mp,idx_c80_mp);
+Lc80_mmp=L5(idx_c80_mmp,idx_c80_mmp);
+Lc80_mmmp=L5(idx_c80_mmmp,idx_c80_mmmp);
+Lc80_mmmmp=L5(idx_c80_mmmmp,idx_c80_mmmmp);
+Lc80_mmmmm=L5(idx_c80_mmmmm,idx_c80_mmmmm);
+[Uc80_ppppp,Dc80_ppppp]=eiga(Lc80_ppppp);
+[Uc80_ppppm,Dc80_ppppm]=eiga(Lc80_ppppm);
+[Uc80_pppm,Dc80_pppm]=eiga(Lc80_pppm);
+[Uc80_ppm,Dc80_ppm]=eiga(Lc80_ppm);
+[Uc80_pm,Dc80_pm]=eiga(Lc80_pm);
+[Uc80_mp,Dc80_mp]=eiga(Lc80_mp);
+[Uc80_mmp,Dc80_mmp]=eiga(Lc80_mmp);
+[Uc80_mmmp,Dc80_mmmp]=eiga(Lc80_mmmp);
+[Uc80_mmmmp,Dc80_mmmmp]=eiga(Lc80_mmmmp);
+[Uc80_mmmmm,Dc80_mmmmm]=eiga(Lc80_mmmmm);
+
+print_c_gftmatrix(Uc80_ppppp/4/sqrt(2),'cycle80_ppppp','c_code/cycle80_ppppp.txt');
+print_c_gftmatrix(Uc80_ppppm/4/sqrt(2),'cycle80_ppppm','c_code/cycle80_ppppm.txt');
+print_c_gftmatrix(Uc80_pppm/4,'cycle80_pppm','c_code/cycle80_pppm.txt');
+print_c_gftmatrix(Uc80_ppm/2/sqrt(2),'cycle80_ppm','c_code/cycle80_ppm.txt');
+print_c_gftmatrix(Uc80_pm/2,'cycle80_pm','c_code/cycle80_pm.txt');
+print_c_gftmatrix(Uc80_mp/2,'cycle80_mp','c_code/cycle80_mp.txt');
+print_c_gftmatrix(Uc80_mmp/2/sqrt(2),'cycle80_mmp','c_code/cycle80_mmp.txt');
+print_c_gftmatrix(Uc80_mmmp/4,'cycle80_mmmp','c_code/cycle80_mmmp.txt');
+print_c_gftmatrix(Uc80_mmmmp/4/sqrt(2),'cycle80_mmmmp','c_code/cycle80_mmmmp.txt');
+print_c_gftmatrix(Uc80_mmmmm/4/sqrt(2),'cycle80_mmmmm','c_code/cycle80_mmmmm.txt');
 
 %% bi-diagonally symmetric grid
 fprintf(sprintf('Generating code for bd4x4...\n'));
@@ -311,6 +362,54 @@ print_c_tj(Lz8,'z8x8_tj',[],[],[],4000);
 print_c_tj(Lz8_1(1:32,1:32),'z8x8_p_tj',[],[],[],3000);
 print_c_tj(Lz8_1(33:64,33:64),'z8x8_m_tj',[],[],[],3000);
 
+%% skeletal graph 15
+fprintf(sprintf('Generating code for sk15...\n'));
+
+Wsk=skeleton15;
+Lsk=w2l(Wsk);
+[Usk,Dst]=eiga(Lsk);
+Bsk=bmat(15,[4,5,6,10,11,12,15,14,13,9,8,7]);
+Lsk_1=Bsk*Lsk*Bsk;
+Lsk_p=Lsk_1([1,2,3,10,11,12,13,14,15],[1,2,3,10,11,12,13,14,15]);
+Lsk_m=Lsk_1([4,5,6],[4,5,6]);  % Lm1=Lm2
+[Usk_p,Dsk_p]=eiga(Lsk_p);
+[Usk_m,Dsk_m]=eiga(Lsk_m);
+
+print_c_gftmatrix(Usk,'sk15','c_code/sk15.txt');
+print_c_gftmatrix(Usk_p/sqrt(2),'sk15_p','c_code/sk15_p.txt');
+print_c_gftmatrix(Usk_m/sqrt(2),'sk15_m','c_code/sk15_m.txt');
+
+%% skeletal graph 25
+fprintf(sprintf('Generating code for sk25...\n'));
+
+alist=[1,2,3,3,5,9,5,6,7,9,10,11,1,13,14,15,1,17,18,19,8,23,12,25;
+       2,21,21,4,21,21,6,7,8,10,11,12,13,14,15,16,17,18,19,20,23,22,25,24]';
+wlist=ones(1,24);
+W=adjlist2mat(25,alist,wlist);
+L=w2l(W);
+[Usk25,Dsk25]=eiga(L);
+
+idx_r=[5,6,7,8,22,23,13,14,15,16];
+idx_l=[20,19,18,17,25,24,12,11,10,9];
+idx_m=[1,2,3,4,21];
+B1=bmat(25,[idx_l,idx_r]);
+L1=B1*L*B1;
+
+%figure; imagesc(L1([idx_m,idx_l,idx_r],[idx_m,idx_l,idx_r]));
+idx_p=sort([idx_m, idx_l]);
+idx_m1=[5,6,7,8,22,23];
+idx_m2=[13,14,15,16];
+Lp=L1(idx_p,idx_p);
+Lm1=L1(idx_m1,idx_m1);
+Lm2=L1(idx_m2,idx_m2);
+[Usk25_p,Dsk25_p]=eiga(Lp);
+[Usk25_m1,Dsk25_m1]=eiga(Lm1);
+[Usk25_m2,Dsk25_m2]=eiga(Lm2);
+
+print_c_gftmatrix(Usk25,'sk25','c_code/sk25.txt');
+print_c_gftmatrix(Usk25_p/sqrt(2),'sk25_p','c_code/sk25_p.txt');
+print_c_gftmatrix(Usk25_m1/sqrt(2),'sk25_m1','c_code/sk25_m1.txt');
+print_c_gftmatrix(Usk25_m2/sqrt(2),'sk25_m2','c_code/sk25_m2.txt');
 
 %% move the c_code folder
 system('mv *tj_coords.h c_code/');
@@ -321,6 +420,10 @@ system('mv *tj_idx.h c_code/');
 fprintf(sprintf('Concatenating files...\n'));
 
 files_mat_cat={'star10','star10_ppp','star100','star100_pppppp',...
+    'cycle12','cycle12_ppp','cycle12_pm','cycle12_mp','cycle12_mmp',...
+    'cycle80','cycle80_ppppp','cycle80_ppppm','cycle80_pppm',...
+    'cycle80_ppm','cycle80_pm','cycle80_mp','cycle80_mmp',...
+    'cycle80_mmmp','cycle80_mmmmp','cycle80_mmmmm',...
     'bd4x4','bd4x4_pp','bd4x4_pm','bd4x4_mp','bd4x4_mm',...
     'bd8x8','bd8x8_pp','bd8x8_pm','bd8x8_mp','bd8x8_mm',...
     'dct4x4','dct4x4_pmp','dct4x4_mmp','dct8x8','dct8x8_pppmp',...
