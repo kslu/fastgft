@@ -24,7 +24,7 @@ Here is a brief summary of how to produce the main results.
      ./run_speed_test.sh
 
 2. To reproduce the figures in the paper, use the MATLAB code in the
-   matlab/ folder. The main script is demo_rtvserr.m
+   matlab_runtime/ folder. The main script is demo_rtvserr.m
 
    Before running this script, one can obtain the relative error (RE) and
    number of multiplications of each GFT implementation purely in MATLAB.
@@ -38,7 +38,10 @@ Here is a brief summary of how to produce the main results.
      src/givens_tj.h
 
    were generated using the MATLAB script demo_generate_c_code.m
-   (The resulting C code will be stored in matlab/c_code/ and should be
+   (The resulting C code will be stored in matlab_runtime/c_code/ and should be
    the same as those written the above .h files)
+   
+4. The search of involution is discussed in the supplementary.pdf
+   The MATLAB implementations with examples are included in matlab_search_inv/
 
 The programs and MATLAB scripts have been tested on macOS High Sierra 10.13.3
