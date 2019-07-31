@@ -3,7 +3,7 @@ Fast GFT implementation
 This repository is provided for generating the results in the paper:
 
 Keng-Shih Lu and Antonio Ortega, "Fast Graph Fourier Transforms based on
-Graph Symmetry and Bipartition."
+Graph Symmetry and Bipartition," IEEE Transaction on Signal Processing.
 
 Here is a brief summary of how to produce the main results.
 
@@ -44,4 +44,5 @@ Here is a brief summary of how to produce the main results.
 4. The search of involution is discussed in the supplementary.pdf
    The MATLAB implementations with examples are included in matlab_search_inv/
 
-The programs and MATLAB scripts have been tested on macOS High Sierra 10.13.3
+The programs and MATLAB scripts have been tested on macOS High Sierra 10.13
+and macOS Mojave 10.14.
