@@ -3,7 +3,7 @@ Fast GFT implementation
 This repository is provided for generating the results in the paper:
 
 Keng-Shih Lu and Antonio Ortega, "Fast Graph Fourier Transforms based on
-Graph Symmetry and Bipartition," IEEE Transaction on Signal Processing.
+Graph Symmetry and Bipartition," IEEE Transactions on Signal Processing.
 
 Here is a brief summary of how to produce the main results.
 
